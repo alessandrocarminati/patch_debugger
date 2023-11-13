@@ -217,17 +217,17 @@ func matchScore(positionMap map[string][]int, hunkText []Line, position int) (in
 	for i, hunkLine := range hunkText {
 		// Skip lines with operation "+"
 		if hunkLine.Operation == "+" {
-//			fmt.Println("skip ", hunkLine.Content)
+			fmt.Println("skip ", hunkLine.Content)
 			continue
 		}
-//		fmt.Println("consider \"", hunkLine.Content, "\"")
+		fmt.Println("consider \"", hunkLine.Content, "\"")
 
 		// Find the positions of the content in the text
 		contentPositions, exists := positionMap[hunkLine.Content]
 
-		if !exists || len(contentPositions) == 0 {
+		if !exists { //&& len(contentPositions) == 0 {
 			// No match for the current hunk line, penalize and skip
-//			fmt.Println("     -1 not exist ", hunkLine.Content)
+			fmt.Println("     -1 not exist ", hunkLine.Content)
 			resMap = append(resMap, hunkTextMap{i, -1, hunkLine.Content, hunkLine.Operation})
 			score -= 1
 			continue
@@ -248,15 +248,15 @@ func matchScore(positionMap map[string][]int, hunkText []Line, position int) (in
 			initialOffset = bestPos
 			prevPos=bestPos
 		}
-//		fmt.Println("     best pos for ", hunkLine.Content," is ", bestPos, " with score ", bestPosScore)
+		fmt.Println("     best pos for ", hunkLine.Content," is ", bestPos, " with score ", bestPosScore)
 		// Update score based on the position check
 		if bestPos<0 {
-//			fmt.Println("     \"", hunkLine.Content, "\"<-- not exist before ", currentPosition)
+			fmt.Println("     \"", hunkLine.Content, "\"<-- not exist before ", currentPosition)
 			resMap = append(resMap, hunkTextMap{i, -1, hunkLine.Content, hunkLine.Operation})
 			score -= 1
 		} else {
-//			fmt.Println("     \"", hunkLine.Content, "\" at position ", bestPos, " is the best fit with core ", len(hunkText) - bestPosScore)
-//			fmt.Println("scoring: len(hunkText) ", len(hunkText), " bestPosScore ", bestPosScore, " bestPos-prevPos ", bestPos-prevPos) 
+			fmt.Println("     \"", hunkLine.Content, "\" at position ", bestPos, " is the best fit with core ", len(hunkText) - bestPosScore)
+			fmt.Println("scoring: len(hunkText) ", len(hunkText), " bestPosScore ", bestPosScore, " bestPos-prevPos ", bestPos-prevPos) 
 			score += len(hunkText) - bestPosScore  - (bestPos-prevPos)
 			currentPosition = bestPos
 			prevPos = bestPos
@@ -264,14 +264,17 @@ func matchScore(positionMap map[string][]int, hunkText []Line, position int) (in
 		}
 	}
 
-//	fmt.Println("initial offset ", initialOffset, " score ", score - initialOffset)
+	fmt.Println("initial offset ", initialOffset, " score ", score - initialOffset)
 	return score - initialOffset, resMap
 }
 
 func ApplyPatch(patch *Patch) string {
 	output := ""
 
+	commitHashes := make(map[string]Commit)
+
 	for _, hunk := range patch.Hunks {
+		fmt.Println("-->", hunk.FileName)
 		fileLines, err := readLinesFromFile(hunk.FileName)
 			if err != nil {
 			panic("sdf");
@@ -283,20 +286,38 @@ func ApplyPatch(patch *Patch) string {
 		}
 		if offs == -1 {
 			output += fmt.Sprintf("hunk %s#%d%s does NOT appily%s\n", string(colorYellow), hunk.HunkNo, string(colorRed), string(colorReset))
+			commits, err := gitFetchFileHistory("/home/alessandro/src/linux/", hunk.FileName)
+			if err != nil {
+				fmt.Printf("/home/alessandro/src/linux/%s\n", hunk.FileName)
+				panic(err)
+			}
+
 			m := mapHunk(fileLines, *hunk)
 			for _, v := range m {
 				if v.textLine == -1 {
 					output += fmt.Sprintf("%s%s%s%s%s\n", string(colorHYellow), v.textOpt, string(colorRed), v.textStr, string(colorReset))
+					for _, c := range commits {
+						if (len(strings.Fields(v.textStr))>2 && strings.Contains(c.Patch, v.textStr[1:])){
+							commitHashes[c.Hash]=c
+						}
+					}
 				} else {
 					output += fmt.Sprintf("%s%s%s%s%s\n", string(colorHYellow), v.textOpt, string(colorGreen), v.textStr, string(colorReset))
 				}
 //				output += fmt.Sprintf("[%d] -> [%d] ==> %s\n", v.hunkLine, v.textLine, v.textStr)
+
 			}
 		} else {
 			output += fmt.Sprintf("hunk %s#%d%s appiles %swith offset %s%d%s\n", string(colorYellow), hunk.HunkNo, string(colorGreen), string(colorReset), string(colorYellow), hunk.OriginalStartLine - offs, string(colorReset))
 		}
 	}
-
+	output += fmt.Sprintf("You may want to look at these commits:%s\n", string(colorHYellow))
+	if len(commitHashes)>0 {
+		for k, v := range commitHashes {
+			output += fmt.Sprintf("%s\n%s\n",k, v.Patch)
+		}
+		output += fmt.Sprintf("%s", string(colorReset))
+	}
 	return output
 }
 
@@ -340,3 +361,4 @@ func main() {
 	output := ApplyPatch(patch)
 	fmt.Println(output)
 }
+

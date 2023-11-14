@@ -187,12 +187,13 @@ func mapHunk(text []string, hunk Hunk) []hunkTextMap {
         bestScore :=  math.MinInt
 //        bestPosition := -1
 
+
 	for i, value := range text {
 		positionMap[value] = append(positionMap[value], i)
 	}
 
         for position := 0; position < len(text); position++ {
-                score, res := matchScore(positionMap, hunk.Lines, position)
+                score, res := matchScore(positionMap, hunk.Lines, position, len(text))
 //                fmt.Println("Match Score at ", position,": ", score)
                 if score > bestScore {
 //                        bestPosition = position
@@ -206,7 +207,7 @@ func mapHunk(text []string, hunk Hunk) []hunkTextMap {
 	return bestRes
 }
 
-func matchScore(positionMap map[string][]int, hunkText []Line, position int) (int, []hunkTextMap) {
+func matchScore(positionMap map[string][]int, hunkText []Line, position, textSize int) (int, []hunkTextMap) {
 	var resMap []hunkTextMap
 	currentPosition := position
 	score := 0
@@ -216,6 +217,10 @@ func matchScore(positionMap map[string][]int, hunkText []Line, position int) (in
 	// Iterate over hunk lines
 	for i, hunkLine := range hunkText {
 		// Skip lines with operation "+"
+		if currentPosition+len(hunkText)>textSize {
+			score = -textSize
+			break
+		}
 		if hunkLine.Operation == "+" {
 			fmt.Println("skip ", hunkLine.Content)
 			continue
@@ -242,6 +247,8 @@ func matchScore(positionMap map[string][]int, hunkText []Line, position int) (in
 					bestPos = pos
 					bestPosScore = pos - currentPosition
 				}
+			} else {
+				continue
 			}
 		}
 		if initialOffset < 0 {

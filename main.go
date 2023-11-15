@@ -291,9 +291,17 @@ func longestTokenSize(line string) int {
 }
 
 func ApplyPatch(patch *Patch) string {
+type ResItems struct{
+	Hunk int
+	File string
+	Commit string
+	RefText string
+	Reason string
+}
+
 	output := ""
 
-	commitHashes := make(map[string]Commit)
+	commitHashes := make(map[string]ResItems)
 	textLineStats := make(map[string]int)
 
 	for _, hunk := range patch.Hunks {
@@ -328,7 +336,13 @@ func ApplyPatch(patch *Patch) string {
 					for _, c := range commits {
 //						fmt.Printf("search '%s' in %s, [%t]\n", v.textStr[1:], c.Hash, strings.Contains(c.Patch, v.textStr[1:]))
 						if (longestTokenSize(v.textStr)>5 && strings.Contains(c.Patch, v.textStr[1:])){
-							commitHashes[c.Hash]=c
+							commitHashes[c.Hash]=ResItems{
+								Hunk: hunk.HunkNo,
+								File: hunk.FileName,
+								Commit: c.Hash,
+								RefText: v.textStr[1:],
+								Reason: "missing",
+							}
 
 						}
 					}
@@ -344,8 +358,8 @@ func ApplyPatch(patch *Patch) string {
 	}
 	output += fmt.Sprintf("You may want to look at these commits:%s\n", string(colorHYellow))
 	if len(commitHashes)>0 {
-		for k, v := range commitHashes {
-			output += fmt.Sprintf("%s\n%s\n",k, v.Patch)
+		for _, v := range commitHashes {
+			output += fmt.Sprintf("File %s:H%d Commit: %s Reason %s [%s]\n", v.File, v.Hunk, v.Commit, v.Reason, v.RefText)
 		}
 		output += fmt.Sprintf("%s", string(colorReset))
 	}

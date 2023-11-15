@@ -294,6 +294,7 @@ func ApplyPatch(patch *Patch) string {
 	output := ""
 
 	commitHashes := make(map[string]Commit)
+	textLineStats := make(map[string]int)
 
 	for _, hunk := range patch.Hunks {
 //		fmt.Println("-->", hunk.FileName)
@@ -301,6 +302,10 @@ func ApplyPatch(patch *Patch) string {
 			if err != nil {
 			panic("sdf");
 		}
+		for _, l := range fileLines {
+			textLineStats[l]++
+		}
+
 		output += fmt.Sprintf("%sProcessing hunk %s#%d%s on file %s%s%s\n", string(colorReset), string(colorYellow), hunk.HunkNo, string(colorReset), string(colorYellow), hunk.FileName, string(colorReset))
 		offs := findPosition(fileLines, *hunk)
 		if offs == hunk.OriginalStartLine {

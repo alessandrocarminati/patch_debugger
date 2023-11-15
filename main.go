@@ -222,17 +222,17 @@ func matchScore(positionMap map[string][]int, hunkText []Line, position, textSiz
 			break
 		}
 		if hunkLine.Operation == "+" {
-			fmt.Println("skip ", hunkLine.Content)
+//			fmt.Println("skip ", hunkLine.Content)
 			continue
 		}
-		fmt.Println("consider \"", hunkLine.Content, "\"")
+//		fmt.Println("consider \"", hunkLine.Content, "\"")
 
 		// Find the positions of the content in the text
 		contentPositions, exists := positionMap[hunkLine.Content]
 
 		if !exists { //&& len(contentPositions) == 0 {
 			// No match for the current hunk line, penalize and skip
-			fmt.Println("     -1 not exist ", hunkLine.Content)
+//			fmt.Println("     -1 not exist ", hunkLine.Content)
 			resMap = append(resMap, hunkTextMap{i, -1, hunkLine.Content, hunkLine.Operation})
 			score -= 1
 			continue
@@ -255,15 +255,15 @@ func matchScore(positionMap map[string][]int, hunkText []Line, position, textSiz
 			initialOffset = bestPos
 			prevPos=bestPos
 		}
-		fmt.Println("     best pos for ", hunkLine.Content," is ", bestPos, " with score ", bestPosScore)
+//		fmt.Println("     best pos for ", hunkLine.Content," is ", bestPos, " with score ", bestPosScore)
 		// Update score based on the position check
 		if bestPos<0 {
-			fmt.Println("     \"", hunkLine.Content, "\"<-- not exist before ", currentPosition)
+//			fmt.Println("     \"", hunkLine.Content, "\"<-- not exist before ", currentPosition)
 			resMap = append(resMap, hunkTextMap{i, -1, hunkLine.Content, hunkLine.Operation})
 			score -= 1
 		} else {
-			fmt.Println("     \"", hunkLine.Content, "\" at position ", bestPos, " is the best fit with core ", len(hunkText) - bestPosScore)
-			fmt.Println("scoring: len(hunkText) ", len(hunkText), " bestPosScore ", bestPosScore, " bestPos-prevPos ", bestPos-prevPos) 
+//			fmt.Println("     \"", hunkLine.Content, "\" at position ", bestPos, " is the best fit with core ", len(hunkText) - bestPosScore)
+//			fmt.Println("scoring: len(hunkText) ", len(hunkText), " bestPosScore ", bestPosScore, " bestPos-prevPos ", bestPos-prevPos) 
 			score += len(hunkText) - bestPosScore  - (bestPos-prevPos)
 			currentPosition = bestPos
 			prevPos = bestPos
@@ -338,7 +338,11 @@ func findPosition(fn []string, hunk Hunk) int {
         }
 
 	for i := 0; i <= len(fn)-len(app); i++ {
-		if strings.Join(fn[i:i+len(app)], "") == strings.Join(app, "") {
+		if strings.Join(fn[i:i+len(app)], "\n") == strings.Join(app, "\n") {
+//			fmt.Println("=======================================================")
+//			fmt.Println(strings.Join(fn[i:i+len(app)], ""))
+//			fmt.Println("-------------------------------------------------------")
+//			fmt.Println(strings.Join(app, ""))
 			return i
 		}
 	}

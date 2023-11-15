@@ -275,6 +275,21 @@ func matchScore(positionMap map[string][]int, hunkText []Line, position, textSiz
 	return score - initialOffset, resMap
 }
 
+func longestTokenSize(line string) int {
+	re := regexp.MustCompile(`\b\w+\b`)
+	tokens := re.FindAllString(line, -1)
+	maxLength := 0
+
+	for _, token := range tokens {
+		tokenLength := len(token)
+		if tokenLength > maxLength {
+			maxLength = tokenLength
+		}
+	}
+
+	return maxLength
+}
+
 func ApplyPatch(patch *Patch) string {
 	output := ""
 
@@ -306,8 +321,10 @@ func ApplyPatch(patch *Patch) string {
 				if v.textLine == -1 {
 					output += fmt.Sprintf("%s%s%s%s%s\n", string(colorHYellow), v.textOpt, string(colorRed), v.textStr, string(colorReset))
 					for _, c := range commits {
-						if (len(strings.Fields(v.textStr))>2 && strings.Contains(c.Patch, v.textStr[1:])){
+//						fmt.Printf("search '%s' in %s, [%t]\n", v.textStr[1:], c.Hash, strings.Contains(c.Patch, v.textStr[1:]))
+						if (longestTokenSize(v.textStr)>5 && strings.Contains(c.Patch, v.textStr[1:])){
 							commitHashes[c.Hash]=c
+
 						}
 					}
 				} else {

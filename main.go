@@ -289,10 +289,10 @@ func ApplyPatch(patch *Patch) string {
 		output += fmt.Sprintf("%sProcessing hunk %s#%d%s on file %s%s%s\n", string(colorReset), string(colorYellow), hunk.HunkNo, string(colorReset), string(colorYellow), hunk.FileName, string(colorReset))
 		offs := findPosition(fileLines, *hunk)
 		if offs == hunk.OriginalStartLine {
-			output += fmt.Sprintf("hunk %s#%d%s appiles perfectly%s\n", string(colorYellow), hunk.HunkNo, string(colorGreen), string(colorReset) )
+			output += fmt.Sprintf("hunk %s#%d%s applies perfectly%s\n", string(colorYellow), hunk.HunkNo, string(colorGreen), string(colorReset) )
 		}
 		if offs == -1 {
-			output += fmt.Sprintf("hunk %s#%d%s does NOT appily%s\n", string(colorYellow), hunk.HunkNo, string(colorRed), string(colorReset))
+			output += fmt.Sprintf("hunk %s#%d%s does NOT appliy%s\n", string(colorYellow), hunk.HunkNo, string(colorRed), string(colorReset))
 			commits, err := gitFetchFileHistory("/home/alessandro/src/linux/", hunk.FileName)
 			if err != nil {
 				fmt.Printf("/home/alessandro/src/linux/%s\n", hunk.FileName)
@@ -317,7 +317,7 @@ func ApplyPatch(patch *Patch) string {
 
 			}
 		} else {
-			output += fmt.Sprintf("hunk %s#%d%s appiles %swith offset %s%d%s\n", string(colorYellow), hunk.HunkNo, string(colorGreen), string(colorReset), string(colorYellow), hunk.OriginalStartLine - offs, string(colorReset))
+			output += fmt.Sprintf("hunk %s#%d%s applies %swith offset %s%d%s\n", string(colorYellow), hunk.HunkNo, string(colorGreen), string(colorReset), string(colorYellow), hunk.OriginalStartLine - offs, string(colorReset))
 		}
 	}
 	output += fmt.Sprintf("You may want to look at these commits:%s\n", string(colorHYellow))

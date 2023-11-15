@@ -271,7 +271,7 @@ func matchScore(positionMap map[string][]int, hunkText []Line, position, textSiz
 		}
 	}
 
-	fmt.Println("initial offset ", initialOffset, " score ", score - initialOffset)
+//	fmt.Println("initial offset ", initialOffset, " score ", score - initialOffset)
 	return score - initialOffset, resMap
 }
 
@@ -281,7 +281,7 @@ func ApplyPatch(patch *Patch) string {
 	commitHashes := make(map[string]Commit)
 
 	for _, hunk := range patch.Hunks {
-		fmt.Println("-->", hunk.FileName)
+//		fmt.Println("-->", hunk.FileName)
 		fileLines, err := readLinesFromFile(hunk.FileName)
 			if err != nil {
 			panic("sdf");
@@ -298,7 +298,9 @@ func ApplyPatch(patch *Patch) string {
 				fmt.Printf("/home/alessandro/src/linux/%s\n", hunk.FileName)
 				panic(err)
 			}
-
+//			for _, c := range commits{
+//				fmt.Println(c.Hash)
+//			}
 			m := mapHunk(fileLines, *hunk)
 			for _, v := range m {
 				if v.textLine == -1 {

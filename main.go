@@ -38,7 +38,6 @@ type MapResult struct {
 
 // Patch represents a unified diff patch.
 type Patch struct {
-//	FileName   string
 	Hunks      []*Hunk
 	LineNumber int
 }
@@ -70,7 +69,6 @@ func ParsePatch(patchContent string) (*Patch, error) {
 	hn := 0
 	regexPattern := regexp.MustCompile(`^[ab]/`)
 
-//	fmt.Println("ParsePatch: start")
 	for scanner.Scan() {
 		line := scanner.Text()
 		if (strings.HasPrefix(line, "index ")|| strings.HasPrefix(line, "+++ ")|| strings.HasPrefix(line, "--- ")) {
@@ -81,10 +79,8 @@ func ParsePatch(patchContent string) (*Patch, error) {
 			parts := strings.Fields(line)
 			if len(parts) >= 4 {
 				FileName = regexPattern.ReplaceAllString(parts[3], "")
-//				fmt.Println("New file detected: ", currentHunk.FileName)
 			}
 		} else if strings.HasPrefix(line, "@@") {
-//			fmt.Println("New hunk started")
 			// Parse hunk information
 			hn ++
 			currentHunk = &Hunk{}
@@ -103,14 +99,12 @@ func ParsePatch(patchContent string) (*Patch, error) {
 		}
 	}
 
-//	fmt.Println("patch parsed: ", patch)
 	return patch, nil
 }
 
 
 func parseHunkHeader(line string, hunk *Hunk) error {
 	// Use regular expression to extract hunk information
-//	fmt.Println("Parsing the hunk -> ", line)
 	re := regexp.MustCompile(`@@ -(\d+),(\d+) \+(\d+),(\d+) @@(.*)`)
 	matches := re.FindStringSubmatch(line)
 	if len(matches) != 6 {
@@ -144,7 +138,6 @@ func parseHunkHeader(line string, hunk *Hunk) error {
 	hunk.ModifiedStartLine = modifiedStartLine
 	hunk.ModifiedLines = modifiedLines
 
-//	fmt.Println("Hunk is about:", string(colorYellow), hunk.Description, string(colorReset))
 	return nil
 }
 
@@ -185,7 +178,6 @@ func mapHunk(text []string, hunk Hunk) []hunkTextMap {
 
 	positionMap := make(map[string][]int)
         bestScore :=  math.MinInt
-//        bestPosition := -1
 
 
 	for i, value := range text {
@@ -194,16 +186,12 @@ func mapHunk(text []string, hunk Hunk) []hunkTextMap {
 
         for position := 0; position < len(text); position++ {
                 score, res := matchScore(positionMap, hunk.Lines, position, len(text))
-//                fmt.Println("Match Score at ", position,": ", score)
                 if score > bestScore {
-//                        bestPosition = position
                         bestScore = score
-//                        fmt.Println(res)
                         bestRes = res
                 }
         }
 
-//	fmt.Println("best match at ", bestPosition, bestScore)
 	return bestRes
 }
 
@@ -222,17 +210,14 @@ func matchScore(positionMap map[string][]int, hunkText []Line, position, textSiz
 			break
 		}
 		if hunkLine.Operation == "+" {
-//			fmt.Println("skip ", hunkLine.Content)
 			continue
 		}
-//		fmt.Println("consider \"", hunkLine.Content, "\"")
 
 		// Find the positions of the content in the text
 		contentPositions, exists := positionMap[hunkLine.Content]
 
-		if !exists { //&& len(contentPositions) == 0 {
+		if !exists {
 			// No match for the current hunk line, penalize and skip
-//			fmt.Println("     -1 not exist ", hunkLine.Content)
 			resMap = append(resMap, hunkTextMap{i, -1, hunkLine.Content, hunkLine.Operation})
 			score -= 1
 			continue
@@ -255,15 +240,11 @@ func matchScore(positionMap map[string][]int, hunkText []Line, position, textSiz
 			initialOffset = bestPos
 			prevPos=bestPos
 		}
-//		fmt.Println("     best pos for ", hunkLine.Content," is ", bestPos, " with score ", bestPosScore)
 		// Update score based on the position check
 		if bestPos<0 {
-//			fmt.Println("     \"", hunkLine.Content, "\"<-- not exist before ", currentPosition)
 			resMap = append(resMap, hunkTextMap{i, -1, hunkLine.Content, hunkLine.Operation})
 			score -= 1
 		} else {
-//			fmt.Println("     \"", hunkLine.Content, "\" at position ", bestPos, " is the best fit with core ", len(hunkText) - bestPosScore)
-//			fmt.Println("scoring: len(hunkText) ", len(hunkText), " bestPosScore ", bestPosScore, " bestPos-prevPos ", bestPos-prevPos) 
 			score += len(hunkText) - bestPosScore  - (bestPos-prevPos)
 			currentPosition = bestPos
 			prevPos = bestPos
@@ -271,7 +252,6 @@ func matchScore(positionMap map[string][]int, hunkText []Line, position, textSiz
 		}
 	}
 
-//	fmt.Println("initial offset ", initialOffset, " score ", score - initialOffset)
 	return score - initialOffset, resMap
 }
 
@@ -305,7 +285,6 @@ type ResItems struct{
 	textLineStats := make(map[string]int)
 
 	for _, hunk := range patch.Hunks {
-//		fmt.Println("-->", hunk.FileName)
 		fileLines, err := readLinesFromFile(hunk.FileName)
 			if err != nil {
 			panic("sdf");
@@ -326,16 +305,12 @@ type ResItems struct{
 				fmt.Printf("/home/alessandro/src/linux/%s\n", hunk.FileName)
 				panic(err)
 			}
-//			for _, c := range commits{
-//				fmt.Println(c.Hash)
-//			}
 			m := mapHunk(fileLines, *hunk)
 			prevTextLine := -1
 			for _, v := range m {
 				if v.textLine == -1 { // context text patch contains but it is not present in the patch target
 					output += fmt.Sprintf("%s%s%s%s%s\n", string(colorHYellow), v.textOpt, string(colorRed), v.textStr, string(colorReset))
 					for _, c := range commits {
-//						fmt.Printf("search '%s' in %s, [%t]\n", v.textStr[1:], c.Hash, strings.Contains(c.Patch, v.textStr[1:]))
 						if (longestTokenSize(v.textStr)>5 && strings.Contains(c.Patch, v.textStr[1:])){
 							commitHashes[c.Hash]=ResItems{
 								Hunk: hunk.HunkNo,
@@ -344,16 +319,13 @@ type ResItems struct{
 								RefText: v.textStr[1:],
 								Reason: "missing",
 							}
-							//fmt.Println(commitHashes[c.Hash])
 
 						}
 					}
 				} else {
 					if (prevTextLine!=-1 && v.textLine != prevTextLine+1) {
-//						output += fmt.Sprintf("%svvvvv] lines in the text not present in the patch [vvvvv%s\n", string(colorRed), string(colorReset))
 						for i:=prevTextLine+1; i<v.textLine; i++ {
 							output += fmt.Sprintf("%s%s%s\n", string(colorYellow), "#"+fileLines[i], string(colorReset))
-							//fmt.Printf("search '%s'\n", "-"+fileLines[i])
 							for _, c := range commits {
 								if (longestTokenSize(fileLines[i])>5 && strings.Contains(c.Patch, "-"+fileLines[i]) && textLineStats[fileLines[i]]<3){
 									commitHashes[c.Hash]=ResItems{
@@ -363,16 +335,13 @@ type ResItems struct{
 										RefText: "-"+fileLines[i],
 										Reason: "other",
 									}
-									//fmt.Println(commitHashes[c.Hash])
 								}
 							}
 						}
-//						output += fmt.Sprintf("%s^^^^^] lines in the text not present in the patch [^^^^^%s\n", string(colorRed), string(colorReset))
 					}
 					output += fmt.Sprintf("%s%s%s%s%s\n", string(colorHYellow), v.textOpt, string(colorGreen), v.textStr, string(colorReset))
 					prevTextLine = v.textLine
 				}
-//				output += fmt.Sprintf("[%d] -> [%d] ==> %s\n", v.hunkLine, v.textLine, v.textStr)
 
 			}
 		} else {
@@ -400,10 +369,6 @@ func findPosition(fn []string, hunk Hunk) int {
 
 	for i := 0; i <= len(fn)-len(app); i++ {
 		if strings.Join(fn[i:i+len(app)], "\n") == strings.Join(app, "\n") {
-//			fmt.Println("=======================================================")
-//			fmt.Println(strings.Join(fn[i:i+len(app)], ""))
-//			fmt.Println("-------------------------------------------------------")
-//			fmt.Println(strings.Join(app, ""))
 			return i
 		}
 	}
@@ -413,11 +378,8 @@ func findPosition(fn []string, hunk Hunk) int {
 func main() {
 	var patchFilePath string
 	flag.StringVar(&patchFilePath, "patch", "0001.diff", "Specify the patch to operate with")
-//	flag.StringVar(&cwd, "patch", "Specify the patch to operate with", "A string flag")
 	flag.Parse()
 
-//	patchFilePath := "0001.diff.part001.patch"
-//	fmt.Println(patchFilePath)
 	patchContent, err := os.ReadFile(patchFilePath)
 	if err != nil {
 		fmt.Println("Error reading patch file:", err)

@@ -330,8 +330,9 @@ type ResItems struct{
 //				fmt.Println(c.Hash)
 //			}
 			m := mapHunk(fileLines, *hunk)
+			prevTextLine := -1
 			for _, v := range m {
-				if v.textLine == -1 {
+				if v.textLine == -1 { // context text patch contains but it is not present in the patch target
 					output += fmt.Sprintf("%s%s%s%s%s\n", string(colorHYellow), v.textOpt, string(colorRed), v.textStr, string(colorReset))
 					for _, c := range commits {
 //						fmt.Printf("search '%s' in %s, [%t]\n", v.textStr[1:], c.Hash, strings.Contains(c.Patch, v.textStr[1:]))
@@ -343,11 +344,33 @@ type ResItems struct{
 								RefText: v.textStr[1:],
 								Reason: "missing",
 							}
+							//fmt.Println(commitHashes[c.Hash])
 
 						}
 					}
 				} else {
+					if (prevTextLine!=-1 && v.textLine != prevTextLine+1) {
+//						output += fmt.Sprintf("%svvvvv] lines in the text not present in the patch [vvvvv%s\n", string(colorRed), string(colorReset))
+						for i:=prevTextLine+1; i<v.textLine; i++ {
+							output += fmt.Sprintf("%s%s%s\n", string(colorYellow), "#"+fileLines[i], string(colorReset))
+							//fmt.Printf("search '%s'\n", "-"+fileLines[i])
+							for _, c := range commits {
+								if (longestTokenSize(fileLines[i])>5 && strings.Contains(c.Patch, "-"+fileLines[i]) && textLineStats[fileLines[i]]<3){
+									commitHashes[c.Hash]=ResItems{
+										Hunk: hunk.HunkNo,
+										File: hunk.FileName,
+										Commit: c.Hash,
+										RefText: "-"+fileLines[i],
+										Reason: "other",
+									}
+									//fmt.Println(commitHashes[c.Hash])
+								}
+							}
+						}
+//						output += fmt.Sprintf("%s^^^^^] lines in the text not present in the patch [^^^^^%s\n", string(colorRed), string(colorReset))
+					}
 					output += fmt.Sprintf("%s%s%s%s%s\n", string(colorHYellow), v.textOpt, string(colorGreen), v.textStr, string(colorReset))
+					prevTextLine = v.textLine
 				}
 //				output += fmt.Sprintf("[%d] -> [%d] ==> %s\n", v.hunkLine, v.textLine, v.textStr)
 
